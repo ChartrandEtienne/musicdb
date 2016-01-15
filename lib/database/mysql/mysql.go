@@ -1,4 +1,4 @@
-package database
+package mysql
 
 import "fmt"
 import "database/sql"
@@ -50,3 +50,4 @@ func Databases() {
   }
   fmt.Println("res: ", cols)
 }
+
