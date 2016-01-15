@@ -4,6 +4,19 @@ import "fmt"
 import "database/sql"
 import _ "github.com/lib/pq"
 
+// once again I could do something really evil and have an open connection as a module global
+
+var global_db *sql.DB
+
+func init() {
+  db, err := sql.Open("postgres", "user=usr password=access dbname=go_test sslmode=disable")
+  if err != nil {
+    panic(err.Error()) 
+  }
+  global_db = db
+}
+
+
 func insertAlbum(db *sql.DB) {
   stmtIns, err := db.Prepare("INSERT INTO album (band_id, name) VALUES ($1, $2)")
   // type stmtIns https://golang.org/pkg/database/sql/driver/#Stmt
@@ -35,6 +48,25 @@ func insertAlbum(db *sql.DB) {
   fmt.Println("num: ", rows_affected, ". id: ", last_id)
 }
 
+func InsertBandReturnId(band string) int {
+  stmtIns, err := global_db.Prepare("INSERT INTO band (name) VALUES ($1)")
+  // type stmtIns https://golang.org/pkg/database/sql/driver/#Stmt
+  if err != nil {
+    panic(err.Error()) 
+  }
+  defer stmtIns.Close() 
+  _, err = stmtIns.Exec(band)
+  if err != nil {
+    panic(err.Error()) 
+  }
+  var band_id int
+  err = global_db.QueryRow("SELECT last_value FROM band_id_seq").Scan(&band_id)
+  if err != nil {
+    panic(err.Error()) 
+  }
+  return band_id
+}
+
 func insertBand(db *sql.DB) {
   stmtIns, err := db.Prepare("INSERT INTO band (name) VALUES ($1)")
   // type stmtIns https://golang.org/pkg/database/sql/driver/#Stmt
@@ -61,5 +93,4 @@ func TestInsert() {
   }
   defer db.Close()
   insertBand(db)
-  insertAlbum(db)
 }
