@@ -48,6 +48,25 @@ func insertAlbum(db *sql.DB) {
   fmt.Println("num: ", rows_affected, ". id: ", last_id)
 }
 
+func InsertAlbumReturnId(album_name string, band_id int) int {
+  stmtIns, err := global_db.Prepare("INSERT INTO album (name, band_id) VALUES ($1, $2)")
+  // type stmtIns https://golang.org/pkg/database/sql/driver/#Stmt
+  if err != nil {
+    panic(err.Error()) 
+  }
+  defer stmtIns.Close() 
+  _, err = stmtIns.Exec(album_name, band_id)
+  if err != nil {
+    panic(err.Error()) 
+  }
+  var album_id int
+  err = global_db.QueryRow("SELECT last_value FROM album_id_seq").Scan(&album_id)
+  if err != nil {
+    panic(err.Error()) 
+  }
+  return album_id
+}
+
 func InsertBandReturnId(band string) int {
   stmtIns, err := global_db.Prepare("INSERT INTO band (name) VALUES ($1)")
   // type stmtIns https://golang.org/pkg/database/sql/driver/#Stmt
@@ -65,6 +84,20 @@ func InsertBandReturnId(band string) int {
     panic(err.Error()) 
   }
   return band_id
+}
+
+// all these inserters should do some error management but eh
+func InsertTrack(track_name string, album_id int) {
+  stmtIns, err := global_db.Prepare("INSERT INTO track (name, album_id) VALUES ($1, $2)")
+  // type stmtIns https://golang.org/pkg/database/sql/driver/#Stmt
+  if err != nil {
+    panic(err.Error()) 
+  }
+  defer stmtIns.Close() 
+  _, err = stmtIns.Exec(track_name, album_id)
+  if err != nil {
+    panic(err.Error()) 
+  }
 }
 
 func insertBand(db *sql.DB) {

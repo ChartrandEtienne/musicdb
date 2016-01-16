@@ -15,10 +15,14 @@ import id3 "github.com/mikkyang/id3-go"
 // let's go with top level just to test the init function stuff described here
 // http://thenewstack.io/understanding-golang-packages/
 
+// band, artist, act, group, sorry about the messy nomenclature
+// TODO I guess
 var bands map[string]int
+var albums map[string]int
 
 func init() {
   bands = make(map[string]int)
+  albums = make(map[string]int)
 }
 
 // this is a bad habit I've already taken
@@ -69,13 +73,19 @@ func walkFunc(path string, info os.FileInfo, err error) error {
   // artist, album, title := getSongData(path)
   // declared but unused variables are illegal.
   // I disagree with this design choice.
-  artist, _, _ := getSongData(path)
-  band_id, existing := bands[artist]
-  if !existing {
-    band_id = postgres.InsertBandReturnId(artist)
-    fmt.Println("|", artist, "| id |", band_id, "| in file ", path)
-    bands[artist] = band_id
+  artist_name, album_name, track_name := getSongData(path)
+  band_id, band_existing := bands[artist_name]
+  if !band_existing {
+    band_id = postgres.InsertBandReturnId(artist_name)
+    bands[artist_name] = band_id
   }
+  album_id, album_existing := albums[album_name]
+  if !album_existing {
+    album_id = postgres.InsertAlbumReturnId(album_name, band_id)
+    albums[album_name] = album_id
+  }
+  // let's pretend one second that individual songs don't have duplicates. 
+  postgres.InsertTrack(track_name, album_id)
   return nil
 }
 
@@ -86,7 +96,9 @@ func Walk() {
   if err != nil {
     panic(err.Error()) 
   }
-  fmt.Println("and we get: ", bands)
+  fmt.Println("and we get: ")
+  fmt.Println("bands: ", bands)
+  fmt.Println("albums: ", albums)
 }
 
 
