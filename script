@@ -1,0 +1,23 @@
+#!/bin/sh
+
+case "$1" in
+install ) 
+  echo "installing"
+  # go build hello
+  # nope.
+  # build apparently compiles and put the bin in current dir. 
+  # install puts the bin in the proper $GOPATH/bin dir. 
+  go install hello
+  echo "installed"
+  ;;
+run) 
+  $GOPATH/bin/hello
+  ;;
+brun) 
+  echo "yeah brun"
+  # don't run if build failed. TODO
+  ;;
+*) 
+  echo "try install or run. Or even brun"
+  ;;
+esac
