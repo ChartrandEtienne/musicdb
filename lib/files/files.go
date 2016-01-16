@@ -1,7 +1,6 @@
 package files
 
 import "fmt"
-import "io/ioutil"
 import "path/filepath"
 import "strings"
 import "os"
@@ -15,30 +14,32 @@ import id3 "github.com/mikkyang/id3-go"
 // let's go with top level just to test the init function stuff described here
 // http://thenewstack.io/understanding-golang-packages/
 
-// band, artist, act, group, sorry about the messy nomenclature
-// TODO I guess
+// "band" and "artist" are used kind of randomly to refer to the same thing. 
+// TODO pick one I guess
 var bands map[string]int
 var albums map[string]int
+
+type SongFileData struct {
+  artist string
+  album string
+  title string
+}
 
 func init() {
   bands = make(map[string]int)
   albums = make(map[string]int)
 }
 
-// this is a bad habit I've already taken
-// every one of my modules has that so I don't have to de-import stuff I don't use. 
-func NoOp() {
-}
-
-func getSongData(path string) (string, string, string) {
+func getSongData(path string) (*SongFileData, error) {
   mp3File, err := id3.Open(path)
   if err != nil {
-    // do something better please
-    return "error", "error", "error"
+    fmt.Errorf("error with filepath |", path)
+    fmt.Println("error with filepath |", path)
+    return nil, err
   }
   defer mp3File.Close()
   // TODO: maybe fix the library, I dunno?
-  return stripTerminalNull(mp3File.Artist()), stripTerminalNull(mp3File.Album()), stripTerminalNull(mp3File.Title())
+  return &SongFileData{artist: stripTerminalNull(mp3File.Artist()), album: stripTerminalNull(mp3File.Album()), title: stripTerminalNull(mp3File.Title())}, nil
 }
 
 func stripTerminalNull(to_strip string) string {
@@ -68,45 +69,48 @@ func whataboutnullchars(file *id3.File, path string) {
 // the first entry will involve inserting a band, an album and a title. 
 // inserting the album requires the band id
 // inserting the title requires the album id
+// the obvious solution is to store that stuff in a hash
 
 func walkFunc(path string, info os.FileInfo, err error) error {
-  // artist, album, title := getSongData(path)
-  // declared but unused variables are illegal.
-  // I disagree with this design choice.
-  artist_name, album_name, track_name := getSongData(path)
-  band_id, band_existing := bands[artist_name]
-  if !band_existing {
-    band_id = postgres.InsertBandReturnId(artist_name)
-    bands[artist_name] = band_id
+  is_directory := info.IsDir()
+  // directories obvioulsy don't contain music
+  if is_directory {
+    return nil
   }
-  album_id, album_existing := albums[album_name]
+  song_data, err := getSongData(path)
+  if err != nil {
+    // just skip that particular file
+    // getSongData error logs the error
+    // not sure what's the best approach in this situation
+    // there's also the annoyment that returning an error stops the walk for that subtree
+    // so just skip that particular file
+    return nil
+  }
+  artist_id, artist_existing := bands[song_data.artist]
+  if !artist_existing {
+    // blindly assume that database stuff works
+    // not sure what's the best approach in this situation
+    artist_id = postgres.InsertBandReturnId(song_data.artist)
+    bands[song_data.artist] = artist_id
+  }
+  album_id, album_existing := albums[song_data.album]
   if !album_existing {
-    album_id = postgres.InsertAlbumReturnId(album_name, band_id)
-    albums[album_name] = album_id
+    album_id = postgres.InsertAlbumReturnId(song_data.album, artist_id)
+    albums[song_data.album] = album_id
   }
   // let's pretend one second that individual songs don't have duplicates. 
-  postgres.InsertTrack(track_name, album_id)
+  postgres.InsertTrack(song_data.title, album_id)
   return nil
 }
 
 func Walk() {
   // https://golang.org/src/path/filepath/path.go?s=11458:11503#L381
   // jackpot 
-  err := filepath.Walk("/home/usr/music", walkFunc)
-  if err != nil {
-    panic(err.Error()) 
-  }
+  // but err won't be set. At least not by walkFunc.
+  // TODO: see in what kind of conditions would this return err
+  // if it can
+  filepath.Walk("/home/usr/music", walkFunc)
   fmt.Println("and we get: ")
   fmt.Println("bands: ", bands)
   fmt.Println("albums: ", albums)
 }
-
-
-func Files() { fmt.Printf("hello, world\n")
-  contents, _ := ioutil.ReadDir("/home/usr/music")
-  // fmt.Println("wtf", contents)
-  for _, element := range contents {
-    fmt.Println("er", element.Name())
-  }
-}
-
