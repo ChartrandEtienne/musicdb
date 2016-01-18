@@ -4,6 +4,7 @@ import "musicdb/lib/files"
 import "os"
 import "fmt"
 import "musicdb/lib/database/postgres"
+import "musicdb/lib/webapp"
 
 // what the fuck does this program do anyways
 // musicdb read /home/usr/music
@@ -39,6 +40,6 @@ func main() {
   } else if "read" == args[1] {
     read(args)
   } else if "serve" == args[1] {
-    serve()
+    webapp.Serve()
   }
 }

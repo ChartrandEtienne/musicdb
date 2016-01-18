@@ -10,12 +10,11 @@ install )
   go install musicdb
   echo "installed"
   ;;
-run) 
+read) 
   $GOPATH/bin/musicdb read /home/usr/music
   ;;
-brun) 
-  echo "yeah brun"
-  # don't run if build failed. TODO
+serve)
+  $GOPATH/bin/musicdb serve
   ;;
 *) 
   echo "try install or run. Or even brun"
