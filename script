@@ -7,11 +7,11 @@ install )
   # nope.
   # build apparently compiles and put the bin in current dir. 
   # install puts the bin in the proper $GOPATH/bin dir. 
-  go install hello
+  go install musicdb
   echo "installed"
   ;;
 run) 
-  $GOPATH/bin/hello
+  $GOPATH/bin/musicdb
   ;;
 brun) 
   echo "yeah brun"

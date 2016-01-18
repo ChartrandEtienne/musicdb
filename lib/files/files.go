@@ -4,7 +4,7 @@ import "fmt"
 import "path/filepath"
 import "strings"
 import "os"
-import "hello/lib/database/postgres"
+import "musicdb/lib/database/postgres"
 import id3 "github.com/mikkyang/id3-go"
 
 // Now I'm not too sure how to do that. 
