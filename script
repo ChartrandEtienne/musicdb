@@ -17,6 +17,6 @@ serve)
   $GOPATH/bin/musicdb serve
   ;;
 *) 
-  echo "try install or run. Or even brun"
+  echo "try install, read, or serve"
   ;;
 esac
