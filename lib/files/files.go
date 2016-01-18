@@ -103,13 +103,13 @@ func walkFunc(path string, info os.FileInfo, err error) error {
   return nil
 }
 
-func Walk() {
+func Walk(root string) {
   // https://golang.org/src/path/filepath/path.go?s=11458:11503#L381
   // jackpot 
   // but err won't be set. At least not by walkFunc.
   // TODO: see in what kind of conditions would this return err
   // if it can
-  filepath.Walk("/home/usr/music", walkFunc)
+  filepath.Walk(root, walkFunc)
   fmt.Println("and we get: ")
   fmt.Println("bands: ", bands)
   fmt.Println("albums: ", albums)
